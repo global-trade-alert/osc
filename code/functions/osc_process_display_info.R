@@ -1,4 +1,5 @@
 osc_process_display_info = function(is.freelancer = NULL, user.id = NULL, processed.rows = NULL){
+  
   # the app is supposed to: 
   # 1. recieve the pulled information from certain hints via osc_pull_display_info - which differentiates for editor versus freelancer
   # 2. the data is transformed from wide to long in the osc_pull_display_info, the app needs to dissassemble the " ; " separated urls / comments (sorted by descending date) to display them
@@ -15,37 +16,6 @@ osc_process_display_info = function(is.freelancer = NULL, user.id = NULL, proces
   # 8. remove those hints which were processed from display (if the freelancer submits twice the same hint without it being sent back to him by the editor, we are in trouble, function doesn't support this)
   # 9. need to think about how i can allocate x hints to each user using the app without them getting the same hints? 
   
-  # user.id = 1
-  # is.freelancer = T
-  # library(gtalibrary)
-  # library(gtasql)
-  # library(pool)
-  # gta_setwd()
-  # gta_sql_pool_open(table.prefix = 'osc_',
-  #                   db.title="ricardo",
-  #                   db.host = gta_pwd("ricardomain")$host,
-  #                   db.name = gta_pwd("ricardomain")$name,
-  #                   db.user = gta_pwd("ricardomain")$user,
-  #                   db.password = gta_pwd("ricardomain")$password)
-  # app.path<<-'17 Shiny/10 OSC/code/'
-  # source(paste0(app.path,'functions/osc_pull_display_info.R'))
-  # display = osc_pull_display_info(is.freelancer = T)
-  # display$was.modified = 0
-  # display$was.modified[1:100] = 1
-  # display$official[1:100] = display$news[1:100]
-  # display$news[1:100] = NA
-  # display$official[101:200] = 'www.someothersourcethanthenewsone.com'
-  # display$was.modified[101:200] = 1
-  # display$news[201:300] = 'someothernewssource.com'
-  # display$was.modified[201:300] = 1
-  # display$new.comment = NA
-  # display$new.comment[105:500] = 'asd1233333333 some comment' 
-  # display$was.modified[105:500] = 1
-  # processed.rows = display[1:600,]
-  # processed.rows$was.accepted = NA
-  # processed.rows$was.accepted[1:200] = 1
-  # processed.rows$was.accepted[1:200] = 0
-
   # ensure two official sources have not been attributed to the same hint 
   no.dup.official = na.omit(unique(processed.rows[,c('hint.id','official')]))
   if(any(duplicated(no.dup.official$hint.id) == T)) stop('two official sources were attributed to the same hint?')
@@ -121,7 +91,9 @@ osc_process_display_info = function(is.freelancer = NULL, user.id = NULL, proces
                               
                               UPDATE bt_hint_log
                               JOIN (SELECT DISTINCT(osc_temp_changes_data_",user.id,".hint_id) FROM osc_temp_changes_data_",user.id,") changes ON changes.hint_id = bt_hint_log.hint_id
-                              SET bt_hint_log.hint_state_id = (SELECT hint_state_id FROM bt_hint_state_list WHERE bt_hint_state_list.hint_state_name = 'OSC - editor desk');")
+                              SET bt_hint_log.hint_state_id = (SELECT hint_state_id FROM bt_hint_state_list WHERE bt_hint_state_list.hint_state_name = 'OSC - editor desk');
+                          
+                              DELETE bt_hint_processing FROM bt_hint_processing JOIN osc_temp_changes_data_1 processed ON processed.hint_id = bt_hint_processing.hint_id WHERE 1 = 1;")
   } else {
     push.updates = paste0("/* EDITOR UPDATES */
                               CREATE INDEX src ON osc_temp_changes_data_",user.id," (url(300));
@@ -182,10 +154,11 @@ osc_process_display_info = function(is.freelancer = NULL, user.id = NULL, proces
                               UPDATE bt_hint_log
                               JOIN (SELECT DISTINCT osc_temp_changes_data_",user.id,".hint_id, osc_temp_changes_data_",user.id,".was_accepted FROM osc_temp_changes_data_",user.id,") changes ON changes.hint_id = bt_hint_log.hint_id
                               SET bt_hint_log.hint_state_id = (CASE WHEN changes.was_accepted = 0 THEN (SELECT hint_state_id FROM bt_hint_state_list WHERE bt_hint_state_list.hint_state_name = 'OSC - editor desk') 
-                              									  WHEN changes.was.accepted = 1 THEN (SELECT hint_state_id FROM bt_hint_state_list WHERE bt_hint_state_list.hint_state_name = 'lead - sent out') END);")
+                              									  WHEN changes.was.accepted = 1 THEN (SELECT hint_state_id FROM bt_hint_state_list WHERE bt_hint_state_list.hint_state_name = 'lead - sent out') END);
+                          
+                              DELETE bt_hint_processing FROM bt_hint_processing JOIN osc_temp_changes_data_1 processed ON processed.hint_id = bt_hint_processing.hint_id WHERE 1 = 1;")
   }
   
   gta_sql_multiple_queries(push.updates, output.queries = 1, show.time = T, db.connection = db.connection)
-  
   
 }
