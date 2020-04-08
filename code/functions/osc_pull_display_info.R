@@ -20,8 +20,10 @@ osc_pull_display_info=function(is.freelancer = NULL){
                           SELECT hints_flancer.hint_id, bt_jurisdiction_list.jurisdiction_name, GROUP_CONCAT(DISTINCT(bt_url_log.url) SEPARATOR ' ; ') AS url,
                           bt_url_type_list.url_type_name, osc_file_log.file_path, GROUP_CONCAT(DISTINCT(osc_hint_comment_log.comment)  ORDER BY osc_hint_comment_log.time_stamp DESC SEPARATOR ' ; ') AS comment 
                           FROM 
-                            (SELECT DISTINCT(bt_hint_log.hint_id) FROM bt_hint_log, bt_hint_state_list 
-                            WHERE bt_hint_log.hint_state_id = bt_hint_state_list.hint_state_id AND bt_hint_state_list.hint_state_name = 'OSC - freelancer desk') hints_flancer
+                            (SELECT DISTINCT(bt_hint_processing.hint_id) FROM bt_hint_processing
+                            JOIN bt_hint_log ON bt_hint_log.hint_id = bt_hint_processing.hint_id
+                            JOIN bt_hint_state_list ON bt_hint_log.hint_state_id = bt_hint_state_list.hint_state_id
+                            WHERE bt_hint_processing.user_id = user.id AND bt_hint_state_list.hint_state_name = 'OSC - freelancer desk') hints_flancer
                             JOIN bt_hint_jurisdiction ON hints_flancer.hint_id = bt_hint_jurisdiction.hint_id
                             JOIN bt_jurisdiction_list ON bt_hint_jurisdiction.jurisdiction_id = bt_jurisdiction_list.jurisdiction_id
                             JOIN bt_hint_url ON hints_flancer.hint_id = bt_hint_url.hint_id AND bt_hint_url.url_accepted != 0
@@ -36,8 +38,10 @@ osc_pull_display_info=function(is.freelancer = NULL){
     pull.display = paste0("SELECT hints_editor.hint_id, bt_jurisdiction_list.jurisdiction_name, GROUP_CONCAT(DISTINCT(bt_url_log.url) SEPARATOR ' ; ') AS url,
                             bt_url_type_list.url_type_name, osc_file_log.file_path, GROUP_CONCAT(DISTINCT(osc_hint_comment_log.comment)  ORDER BY osc_hint_comment_log.time_stamp DESC SEPARATOR ' ; ') AS comment 
                             FROM 
-                            (SELECT DISTINCT(bt_hint_log.hint_id) FROM bt_hint_log, bt_hint_state_list 
-                            WHERE bt_hint_log.hint_state_id = bt_hint_state_list.hint_state_id AND bt_hint_state_list.hint_state_name = 'OSC - editor desk') hints_editor
+                            (SELECT DISTINCT(bt_hint_processing.hint_id) FROM bt_hint_processing
+                            JOIN bt_hint_log ON bt_hint_log.hint_id = bt_hint_processing.hint_id
+                            JOIN bt_hint_state_list ON bt_hint_log.hint_state_id = bt_hint_state_list.hint_state_id
+                            WHERE bt_hint_processing.user_id = user.id AND bt_hint_state_list.hint_state_name = 'OSC - editor desk') hints_editor
                             JOIN bt_hint_jurisdiction ON hints_editor.hint_id = bt_hint_jurisdiction.hint_id
                             JOIN bt_jurisdiction_list ON bt_hint_jurisdiction.jurisdiction_id = bt_jurisdiction_list.jurisdiction_id
                             JOIN bt_hint_url ON hints_editor.hint_id = bt_hint_url.hint_id AND bt_hint_url.url_accepted != 0 AND bt_hint_url.search_id IS NOT NULL
