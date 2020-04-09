@@ -32,7 +32,7 @@ osc_pull_display_info=function(is.freelancer = NULL, user.id = NULL){
                             LEFT JOIN osc_hint_file ON osc_hint_file.hint_id = hints_flancer.hint_id
                             LEFT JOIN osc_file_log ON osc_hint_file.file_id = osc_file_log.file_id
                             LEFT JOIN osc_hint_comment_log ON osc_hint_comment_log.hint_id = hints_flancer.hint_id
-                            GROUP BY hints_flancer.hint_id, bt_hint_url.url_type_id, osc_hint_comment_log.hint_id;")
+                            GROUP BY hints_flancer.hint_id, bt_hint_url.url_type_id;")
   } else {
     #attach only those urls which are non-dormant, i.e. those hints @osc editor desk & search_id non null & was_accepted null (pending decision) or 1
     pull.display = paste0("SELECT hints_editor.hint_id, bt_jurisdiction_list.jurisdiction_name, GROUP_CONCAT(DISTINCT(bt_url_log.url) SEPARATOR ' ; ') AS url,
@@ -44,13 +44,13 @@ osc_pull_display_info=function(is.freelancer = NULL, user.id = NULL){
                             WHERE bt_hint_processing.user_id = ",user.id," AND bt_hint_state_list.hint_state_name = 'OSC - editor desk') hints_editor
                             JOIN bt_hint_jurisdiction ON hints_editor.hint_id = bt_hint_jurisdiction.hint_id
                             JOIN bt_jurisdiction_list ON bt_hint_jurisdiction.jurisdiction_id = bt_jurisdiction_list.jurisdiction_id
-                            JOIN bt_hint_url ON hints_editor.hint_id = bt_hint_url.hint_id AND bt_hint_url.url_accepted != 0 AND bt_hint_url.search_id IS NOT NULL
+                            JOIN bt_hint_url ON hints_editor.hint_id = bt_hint_url.hint_id AND bt_hint_url.url_accepted != 0 AND bt_hint_url.classification_id IS NOT NULL
                             JOIN bt_url_log ON bt_url_log.url_id = bt_hint_url.url_id
                             JOIN bt_url_type_list ON bt_hint_url.url_type_id = bt_url_type_list.url_type_id
                             LEFT JOIN osc_hint_file ON osc_hint_file.hint_id = hints_editor.hint_id
                             LEFT JOIN osc_file_log ON osc_hint_file.file_id = osc_file_log.file_id
                             LEFT JOIN osc_hint_comment_log ON osc_hint_comment_log.hint_id = hints_editor.hint_id
-                            GROUP BY hints_editor.hint_id, bt_hint_url.url_type_id, osc_hint_comment_log.hint_id;")  
+                            GROUP BY hints_editor.hint_id, bt_hint_url.url_type_id;")  
   }
   
   col.names = c('hint.id','jurisdiction.name','official','news','consultancy','other','file.path','comment')
