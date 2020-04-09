@@ -51,12 +51,9 @@ osc_process_display_info = function(is.freelancer = NULL, user.id = NULL, proces
                               
                               CREATE INDEX hint_src ON osc_temp_changes_data_",user.id," (hint_id, url_id, url_type_id);
                               
+                              SET @classification_id = (SELECT AUTO_INCREMENT FROM information_schema.tables WHERE table_name='bt_classification_log');
                               INSERT INTO bt_classification_log(classification_id, user_id, classify_option_id, time_stamp)
-                              SELECT DISTINCT @search_id AS classification_id, ",user.id," AS user_id, (SELECT classify_option_id FROM bt_classify_option_list WHERE classify_option_name = 'OSC') AS classify_option_id, CONVERT_TZ(NOW(), 'UTC' , 'CET') AS time_stamp FROM (SELECT NULL FROM osc_temp_changes_data_",user.id," changes WHERE changes.was_modified = 1) editor_search_id;
-                              
-                              SET @search_id = (SELECT AUTO_INCREMENT FROM information_schema.tables WHERE table_name='bt_classification_log');
-                              INSERT INTO bt_classification_log(classification_id, user_id, classify_option_id, time_stamp)
-                              SELECT @search_id AS search_id, ",user.id," AS user_id, (SELECT classify_option_id FROM bt_classify_option_list WHERE classify_option_name = 'OSC') AS classify_option_id, CONVERT_TZ(NOW(), 'UTC' , 'CET') AS time_stamp;
+                              SELECT @classification_id AS classification_id, ",user.id," AS user_id, (SELECT classify_option_id FROM bt_classify_option_list WHERE classify_option_name = 'OSC') AS classify_option_id, CONVERT_TZ(NOW(), 'UTC' , 'CET') AS time_stamp;
                               
                               INSERT INTO osc_file_log(file_path)
                               SELECT file_path FROM osc_temp_changes_data_",user.id," changes WHERE changes.was_modified = 1 AND changes.file_path IS NOT NULL AND NOT EXISTS (SELECT NULL FROM osc_file_log WHERE osc_file_log.file_path = changes.file_path);
@@ -71,8 +68,8 @@ osc_process_display_info = function(is.freelancer = NULL, user.id = NULL, proces
                               WHERE changes.new_comment IS NOT NULL;
                               
                               /* insert new hint + url + url type pairs and leave url_accepted and validation_user as NULL */
-                              INSERT INTO bt_hint_url(hint_id, url_id, url_type_id, search_id, url_accepted, validation_user)
-                              SELECT changes.hint_id, bt_url_log.url_id, bt_url_type_list.url_type_id, @search_id AS search_id, NULL AS url_accepted, NULL AS validation_user
+                              INSERT INTO bt_hint_url(hint_id, url_id, url_type_id, classification_id, url_accepted, validation_user)
+                              SELECT changes.hint_id, bt_url_log.url_id, bt_url_type_list.url_type_id, @classification_id AS classification_id, NULL AS url_accepted, NULL AS validation_user
                               FROM (SELECT * FROM osc_temp_changes_data_",user.id," WHERE url_id IS NOT NULL) changes
                               WHERE NOT EXISTS
                               (SELECT NULL FROM bt_hint_url WHERE bt_hint_url.hint_id = changes.hint_id AND bt_hint_url.url_id = changes.url_id AND bt_url_type_list.url_type_id = changes.url_type_id);
@@ -84,7 +81,7 @@ osc_process_display_info = function(is.freelancer = NULL, user.id = NULL, proces
                               UPDATE bt_hint_url
                               JOIN osc_temp_changes_data_",user.id," changed_hints ON bt_hint_url.hint_id = changed_hints.hint_id
                               LEFT JOIN osc_temp_changes_data_",user.id," changes ON changed_hints.hint_id = changes.hint_id AND bt_hint_url.url_id = changes.url_id AND bt_hint_url.url_type_id = changes.url_type_id
-                              SET bt_hint_url.search_id = (CASE WHEN ((changes.url_id IS NOT NULL AND bt_hint_url.search_id IS NULL) OR (changes.url_id IS NULL AND bt_hint_url.url_accepted = 1)) THEN @search_id ELSE bt_hint_url.search_id END),
+                              SET bt_hint_url.classification_id = (CASE WHEN ((changes.url_id IS NOT NULL AND bt_hint_url.classification_id IS NULL) OR (changes.url_id IS NULL AND bt_hint_url.url_accepted = 1)) THEN @classification_id ELSE bt_hint_url.classification_id END),
                               	bt_hint_url.url_accepted = (CASE WHEN (changes.url_id IS NOT NULL AND bt_hint_url.url_accepted = 1) THEN 1
                               									 WHEN (changes.url_id IS NULL AND bt_hint_url.url_accepted IS NOT NULL) THEN 0 ELSE NULL END),
                               	bt_hint_url.validation_user = (CASE WHEN ((changes.url_id IS NOT NULL AND bt_hint_url.url_accepted = 0) OR (changes.url_id IS NULL AND bt_hint_url.url_accepted = 1)) THEN NULL ELSE bt_hint_url.validation_user END);
@@ -112,9 +109,9 @@ osc_process_display_info = function(is.freelancer = NULL, user.id = NULL, proces
                               CREATE INDEX hint_src ON osc_temp_changes_data_",user.id," (hint_id, url_id, url_type_id);
                               
                               /* give editor a search_id only if they added a source to an entry in one of the hints they processed, otherwise don't */
-                              SET @search_id = (SELECT AUTO_INCREMENT FROM information_schema.tables WHERE table_name='bt_classification_log');
+                              SET @classification_id = (SELECT AUTO_INCREMENT FROM information_schema.tables WHERE table_name='bt_classification_log');
                               INSERT INTO bt_classification_log(classification_id, user_id, classify_option_id, time_stamp)
-                              SELECT DISTINCT @search_id AS classification_id, ",user.id," AS user_id, (SELECT classify_option_id FROM bt_classify_option_list WHERE classify_option_name = 'OSC') AS classify_option_id, CONVERT_TZ(NOW(), 'UTC' , 'CET') AS time_stamp FROM (SELECT NULL FROM osc_temp_changes_data_",user.id," changes WHERE changes.was_modified = 1) editor_search_id;
+                              SELECT DISTINCT @classification_id AS classification_id, ",user.id," AS user_id, (SELECT classify_option_id FROM bt_classify_option_list WHERE classify_option_name = 'OSC') AS classify_option_id, CONVERT_TZ(NOW(), 'UTC' , 'CET') AS time_stamp FROM (SELECT NULL FROM osc_temp_changes_data_",user.id," changes WHERE changes.was_modified = 1) editor_search_id;
                               
                               INSERT INTO osc_file_log(file_path)
                               SELECT file_path FROM osc_temp_changes_data_",user.id," changes WHERE changes.was_modified = 1 AND changes.file_path IS NOT NULL AND NOT EXISTS (SELECT NULL FROM osc_file_log WHERE osc_file_log.file_path = changes.file_path);
@@ -130,8 +127,8 @@ osc_process_display_info = function(is.freelancer = NULL, user.id = NULL, proces
                               WHERE changes.new_comment IS NOT NULL;
                               
                               /* insert new hint + url + url type pairs and update url_accepted and validation_user to 1 and editor_user_id */ 
-                              INSERT INTO bt_hint_url(hint_id, url_id, url_type_id, search_id, url_accepted, validation_user)
-                              SELECT changes.hint_id, changes.url_id, changes.url_type_id, @search_id AS search_id, 1 AS url_accepted, ",user.id," AS validation_user
+                              INSERT INTO bt_hint_url(hint_id, url_id, url_type_id, classification_id, url_accepted, validation_user)
+                              SELECT changes.hint_id, changes.url_id, changes.url_type_id, @classification_id AS classification_id, 1 AS url_accepted, ",user.id," AS validation_user
                               FROM (SELECT * FROM osc_temp_changes_data_",user.id," WHERE was_modified = 1 AND url_id IS NOT NULL) changes
                               WHERE NOT EXISTS
                               (SELECT NULL FROM bt_hint_url WHERE bt_hint_url.hint_id = changes.hint_id AND bt_hint_url.url_id = changes.url_id AND bt_hint_url.url_type_id = changes.url_type_id);
@@ -144,7 +141,7 @@ osc_process_display_info = function(is.freelancer = NULL, user.id = NULL, proces
                               UPDATE bt_hint_url
                               JOIN osc_temp_changes_data_",user.id," changed_hints ON bt_hint_url.hint_id = changed_hints.hint_id
                               LEFT JOIN osc_temp_changes_data_",user.id," changes ON changed_hints.hint_id = changes.hint_id AND bt_hint_url.url_id = changes.url_id AND bt_hint_url.url_type_id = changes.url_type_id
-                              SET bt_hint_url.search_id = (CASE WHEN (changes.url_id IS NOT NULL AND bt_hint_url.search_id IS NULL) THEN @search_id ELSE bt_hint_url.search_id END),
+                              SET bt_hint_url.classification_id = (CASE WHEN (changes.url_id IS NOT NULL AND bt_hint_url.classification_id IS NULL) THEN @classification_id ELSE bt_hint_url.classification_id END),
                               	bt_hint_url.url_accepted = (CASE WHEN (changes.url_id IS NOT NULL) THEN 1 ELSE 0 END),
                               	bt_hint_url.validation_user = ",user.id,";
                               
