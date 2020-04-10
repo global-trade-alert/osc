@@ -1,19 +1,6 @@
 osc_pull_display_info=function(is.freelancer = NULL, user.id = NULL){
   if(is.null(is.freelancer) | length(is.freelancer)!= 1 | !is.logical(is.freelancer) | is.na(is.freelancer)) stop('is.freelancer must be false if you are an editor, or true if you are a freelancer, no other value permitted')
   
-  # is.freelancer = T
-  # library(gtalibrary)
-  # library(gtasql)
-  # library(pool)
-  # gta_setwd()
-  # gta_sql_pool_open(table.prefix = 'osc_',
-  #                   db.title="ricardo",
-  #                   db.host = gta_pwd("ricardomain")$host,
-  #                   db.name = gta_pwd("ricardomain")$name,
-  #                   db.user = gta_pwd("ricardomain")$user,
-  #                   db.password = gta_pwd("ricardomain")$password)
-  
- 
   if(is.freelancer == T){
     # attach only those urls in the bt_hint_url which are suggested by bastiat OR accepted by editor on the other end
     pull.display = paste0("
@@ -70,3 +57,10 @@ osc_pull_display_info=function(is.freelancer = NULL, user.id = NULL){
   return(display)
 }
 
+
+
+# leaving this as comment for long to wide + csplit wide when i get the chance so i can do it fully in sql instead of spreading in R
+# GROUP_CONCAT(DISTINCT IF( bt_url_type_list.url_type_name='official', bt_url_log.url, NULL ) SEPARATOR ' ; ')  AS official,
+# GROUP_CONCAT(DISTINCT IF( bt_url_type_list.url_type_name='news', bt_url_log.url, NULL ) SEPARATOR ' ; ')  AS news,
+# GROUP_CONCAT(DISTINCT IF( bt_url_type_list.url_type_name='consultancy', bt_url_log.url, NULL ) SEPARATOR ' ; ')  AS consultancy,
+# GROUP_CONCAT(DISTINCT IF( bt_url_type_list.url_type_name='other', bt_url_log.url, NULL ) SEPARATOR ' ; ')  AS other,

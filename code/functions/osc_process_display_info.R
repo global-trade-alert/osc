@@ -150,8 +150,8 @@ osc_process_display_info = function(is.freelancer = NULL, user.id = NULL, proces
                                * for editor hints are either accepted or refused was_accepted = 1/0, no neutral option permissible */
                               UPDATE bt_hint_log
                               JOIN (SELECT DISTINCT osc_temp_changes_data_",user.id,".hint_id, osc_temp_changes_data_",user.id,".was_accepted FROM osc_temp_changes_data_",user.id,") changes ON changes.hint_id = bt_hint_log.hint_id
-                              SET bt_hint_log.hint_state_id = (CASE WHEN changes.was_accepted = 0 THEN (SELECT hint_state_id FROM bt_hint_state_list WHERE bt_hint_state_list.hint_state_name = 'OSC - editor desk') 
-                              									  WHEN changes.was.accepted = 1 THEN (SELECT hint_state_id FROM bt_hint_state_list WHERE bt_hint_state_list.hint_state_name = 'lead - sent out') END);
+                              SET bt_hint_log.hint_state_id = (CASE WHEN changes.was_accepted = 0 THEN (SELECT hint_state_id FROM bt_hint_state_list WHERE bt_hint_state_list.hint_state_name = 'OSC - freelancer desk') 
+                              									  WHEN changes.was.accepted = 1 THEN (SELECT hint_state_id FROM bt_hint_state_list WHERE bt_hint_state_list.hint_state_name = 'BT - ready for dispatch') END);
                           
                               DELETE bt_hint_processing FROM bt_hint_processing JOIN osc_temp_changes_data_1 processed ON processed.hint_id = bt_hint_processing.hint_id WHERE 1 = 1;")
   }
